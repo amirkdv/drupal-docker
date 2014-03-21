@@ -39,7 +39,7 @@ All configuration files, typically to be found in `server/conf` have the `.tpl`
 extension and reference a variety of configuration variables.  Dockerfiles use
 `conf_subst` to template these configuration files.  `conf_subst` is a wrapper
 around `envsubst` allowing for clean batch variable substitutions; see
-[conf_subst Usage](#conf_subst-usage) and [envsubst Usage](#envsubst-usage) for
+[conf_subst Usage](#conf_subst) and [envsubst Usage](#envsubst) for
 the reason this wrapper is needed.  The definitions for variables used in each
 configuration file is passed at execution time (that is in corresponding
 `Dockerfile`s) to `conf_subst`.  However, it is desirable to keep all
