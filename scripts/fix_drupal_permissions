@@ -1,0 +1,26 @@
+#!/bin/bash
+source /usr/local/bin/supervisor_drupal_helpers.sh
+
+declare -a writable_dirs=( \
+  "${_conf_drupal_root}/sites/default/files" \
+  "${_conf_drupal_root}/cache"
+)
+log "adjusting permissions on project root directory ${_conf_prj_root}"
+chgrp sudo -R "${_conf_prj_root}"
+chmod -R g=rwx "${_conf_prj_root}"
+chmod -R g+s "${_conf_prj_root}"
+
+log "adjusting permissions on drupal root directory ${_conf_drupal_root}"
+chown -R www-data:sudo "${_conf_drupal_root}"
+find "${_conf_drupal_root}" -type f | xargs chmod u=r,g=rw,o-rwx
+find "${_conf_drupal_root}" -type d | xargs chmod u=rx,g=rwx,o-rwx
+
+log "allowing apache user to write to writable dirs"
+for dir in "${writable_dirs[@]}"; do
+  log "adjusting $dir"
+  if [[ ! -d "$dir" ]]; then
+    log "$dir does not exist, creating"
+    mkdir -p $dir
+  fi
+  chmod -R u+w "$dir"
+done

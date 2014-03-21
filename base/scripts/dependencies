@@ -1,0 +1,32 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+log() { echo -e "\033[0;34m[dependencies.sh] $1\033[00m"; }
+
+script_dir=/usr/local/bin
+
+main(){
+  case "$1" in
+    pkg_group_install)
+      shift
+      source $script_dir/pkg_groups.sh
+      pkg_group_install "$@"
+      ;;
+    pear_extension_install)
+      source $script_dir/pear_extensions.sh
+      shift
+      pear_extension_install "$@"
+      ;;
+    install)
+      shift
+      source $script_dir/custom_installers.sh
+      custom_install "$@"
+      ;;
+    *)
+      log "argument list $@ won't do!"
+      exit 1
+      ;;
+  esac
+}
+main "$@"

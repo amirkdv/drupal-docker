@@ -1,0 +1,80 @@
+#!/bin/bash
+#   Substitute variable references, i.e strings of the form '$_conf_variable' or
+#   '${_conf_variable}' in standard input with values defined in the variable
+#   definition file passed as the first argument.
+#
+#   Synopsis: subst_conf variable_definitions < apache_vhost.template
+#
+#   Where variable_definitions is a sourcable shell script that populates, in
+#   any way it wishes, local variables whose names has the form _conf_*. These
+#   variables do NOT need to be exported by the definition script, for example:
+#     _conf_prj=ProjectX
+#     _conf_doc_root=/var/shared/sites/${_conf_prj}
+#
+#   The template file contains variable references like the following:
+#     <VirtualHost *:80>
+#       ServerName $_conf_prj
+#       DocumentRoot $_conf_doc_root
+#       ErrorLog /var/log/apache2/${_conf_prj}-error.log
+#       CustomLog /var/log/apache2/${_conf_prj}-access.log combined
+#     </VirtualHost>
+#
+#   Notes:
+#     - this script only handles environment separatation and variable name
+#     extraction. The actual task of substitution is delegated to 'envsubst' of
+#     the 'gettext' utilities. This script assumes 'envsubst' is in the PATH.
+#     - substitution happens in a subshell; consequently setting extra
+#     environment variables in the invocation of this script will not affect the
+#     behavior of the program. Only _conf_* variables that are somehow defined
+#     in the current shell after sourcing the definition file (argument 1) are
+#     respected.
+#
+log() { echo -e "\033[0;36m[$( basename $0)] $1\033[00m" >&2; }
+
+substitute(){
+  declare -r conf_file="$1"
+  source $conf_file
+  declare -r all=/tmp/subst_conf_all_defined.txt
+  declare -A rvalues;
+  # find all defined variables of the form _conf_*:
+  # note that without -o posix, set would list all functions too
+  set -o posix ; set | grep -P '^_conf_' > $all
+
+  # extract lvalue and rvalue for each environment variable of the form _conf_*
+  while read line; do
+    lvalue="$( echo $line | cut -d '=' --field 1  )"
+    rvalues[$lvalue]="$( echo $line | cut -d '=' --field 2- )" # field 2 and onwards
+  done < $all
+
+  # assemble the SHELL-FORMAT for envsubst in $variables: '$_conf_var1 $_conf_var2 ...'
+  # and export all extracted environment variables
+  declare variables=''
+  for lvalue in ${!rvalues[@]}; do
+    variables="$variables \$$lvalue"
+  done
+
+  # actually export all variables and call envsubst
+  for lvalue in ${!rvalues[@]}; do
+    export "$lvalue=${rvalues[$lvalue]}"
+  done
+  envsubst "$variables" # reads from stdin
+  rm $all
+}
+
+set -o errexit
+set -o nounset
+
+declare conf_file="$1"
+if [[ -z $conf_file ]]; then
+  log "exactly one variable definition file is required, aborting"
+  exit 1
+fi
+conf_file="$( readlink -f "$conf_file" )"
+if [[ ! -e "$conf_file" ]]; then
+  log "variable definition file $conf_file does not exist"
+  exit 1
+fi
+
+# execute the substitue function in a subshell to avoid confusing the
+# substitution with the environment within which subst_conf is invoked:
+( substitute "$conf_file" )

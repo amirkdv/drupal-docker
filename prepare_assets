@@ -1,0 +1,122 @@
+#!/bin/bash
+# Synopsis: prepare_assets [action] [action argument1 ...]
+#   Available actions are:
+#   - ensure_pubkey_exists [location]
+#   - dl [source] [destination]
+#   - introduce_hosts [host 1 ...]
+#   - git_repo [source] [destination] [branch]
+#   - dockerfile [direcotry] [project]
+#
+log() {
+  echo -e "\033[0;34m[prepare_assets] $1\033[00m";
+}
+
+# $1: directory in which Dockerfile.tpl will be sought and Dockerfile created
+# $2: name of the project; the only variable respected in Dockerfile templates
+#     is $_conf_prj_name, the value for which should be passed as $2.
+dockerfile(){
+  declare -r work_dir="$1"
+  declare -r project="$2"
+  if [[ -e "$work_dir/Dockerfile" ]]; then
+    log "$work_dir/Dockerfile exists, skipping"
+  elif [[ ! -e "$work_dir/Dockerfile.tpl" ]]; then
+    log "$work_dir does not contain a Dockerfile.tpl file, skipping"
+  else
+    _conf_prj_name="$project" envsubst '$_conf_prj_name' < "$work_dir/Dockerfile.tpl" > "$work_dir/Dockerfile"
+    log "Created Dockerfile in $work_dir"
+  fi
+}
+
+ensure_pubkey_exists(){
+  declare -r pubkey_src="$HOME/.ssh/id_rsa.pub"
+  declare -r pubkey_dst="$1/id_rsa.pub"
+  if [[ ! -f "$pubkey_dst" && -f "$pubkey_src" ]]; then
+    log "Missing $pubkey_dst, but found $pubkey_src. Copying it in place."
+    cp $pubkey_src $pubkey_dst
+  elif [[ ! -f "$pubkey_dst" && ! -f "$pubkey_src" ]]; then
+    log "Unable to find $pubkey_dst or $pubkey_src. Please create a new keypair by running 'ssh-keygen' and try again."
+    exit 1
+  else
+    log "$pubkey_dst exists, skipping"
+  fi
+}
+
+introduce_hosts(){
+  while (( "$#" )); do
+    declare remote_host="$1"
+    mkdir -p ~/.ssh
+    touch ~/.ssh/known_hosts
+    log "scanning remote host key..."
+    ssh-keyscan "$remote_host" >> ~/.ssh/known_hosts
+    shift
+  done
+}
+
+dl(){
+  declare -r src_host="$1"
+  declare -r src_path="$2"
+  declare -r dst_dir="$3"
+  declare -r dst_path="$dst_dir/$(basename $src_path)"
+  if [[ -f "$dst_path" ]]; then
+    log "file $dst_path already exists, skipping"
+  else
+    [[ -d $dst_dir ]] || mkdir -p $dst_dir
+    log "downloading file $src_path from $host to $dst_path ..."
+    scp "$src_host:$src_path" "$dst_path"
+  fi
+}
+
+# $1: source repository to be cloned
+# $2: destination directory; default 'repo'
+# $3: branch to checkout; default 'master'
+git_repo(){
+  declare -r src="$1"
+  if [[ -z $src ]]; then
+    log "you must specify a git repo to clone"
+    exit 1
+  fi
+  declare dst="$2"
+  declare branch="$3"
+  if [[ -e ${dst:="$(pwd)/repo"} ]]; then
+    log "directory $dst exists, skipping"
+    return
+  fi
+  log "cloning repository from $src into $dst"
+  git clone $src $dst
+
+  cd $dst
+  log "checking out branch ${branch:="master"}"
+  git checkout $branch
+  cd -
+}
+
+main(){
+  set -e
+  case "$1" in
+    dockerfile)
+      shift
+      dockerfile "$@"
+      ;;
+    ensure_pubkey_exists)
+      shift
+      ensure_pubkey_exists "$@"
+      ;;
+    introduce_hosts)
+      shift
+      introduce_hosts "$@"
+      ;;
+    dl)
+      shift
+      dl "$@"
+      ;;
+    git_repo)
+      shift
+      git_repo "$@"
+      ;;
+    *)
+      log "provided argument list won't do!"
+      exit 1
+      ;;
+  esac
+}
+main "$@"

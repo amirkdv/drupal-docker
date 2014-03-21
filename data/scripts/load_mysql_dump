@@ -1,0 +1,25 @@
+#!/bin/bash
+source /usr/local/bin/supervisor_drupal_helpers.sh
+
+# $1 is absolute path to database dump, else project root path will be prepended
+# $2 is name of the datbaase to populate
+load(){
+  db_dump="$1"
+  db_name="$2"
+  [[ $db_dump  =~ ^/ ]] || db_dump="${_conf_prj_root}/$db_dump"
+  if [[ ! -f $db_dump ]]; then
+    log "database dump '$db_dump' does not exist"
+    exit 1
+  fi
+  dump_length="$(zcat -l $db_dump | awk 'NR == 2 {print $2}')"
+  set +x
+  log "loading database dump $db_dump into MySQL database $db_name ..."
+  mysql -u root -p"${_conf_db_root}" -e "CREATE DATABASE IF NOT EXISTS $db_name"
+  zcat "$db_dump" | pv -f -s $dump_length | mysql -u root -p"${_conf_db_root}" -D $db_name
+}
+
+supervisor_service_up mysql
+
+load "$@"
+
+supervisor_services_done

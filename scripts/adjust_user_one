@@ -1,0 +1,12 @@
+#!/bin/bash
+source /usr/local/bin/supervisor_drupal_helpers.sh
+
+supervisor_service_up mysql
+supervisor_service_up memcached
+
+log "adjusting user one"
+
+$drush php-eval "user_save((object)user_load(1),array('name'=>'${_conf_admin_username}'));"
+$drush user-password ${_conf_admin_username} --password="${_conf_admin_password}"
+
+supervisor_services_done

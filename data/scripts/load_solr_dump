@@ -1,0 +1,26 @@
+#!/bin/bash
+source /usr/local/bin/supervisor_drupal_helpers.sh
+
+# $1 is absolute path to tar.gz dump, else project root path will be prepended
+load(){
+  # NOTE The provided tar dump must match the expected solr data directory
+  # requirements, this script does not check whether the tar dump has absolute
+  # or relative paths, nor does it check if the basename directory matches the
+  # solr data directory basname
+  dump_dir="$( dirname ${_conf_solr_data} )"
+  mkdir -p "$dump_dir"
+  dump="$1"
+  [[ $dump  =~ ^/ ]] || dump="${_conf_prj_root}/$dump"
+  if [[ ! -f $dump ]]; then
+    log "Solr data dump '$dump' does not exist"
+    exit 1
+  fi
+  dump_length="$(zcat -l $dump | awk 'NR == 2 {print $2}')"
+  set +x
+  log "loading Solr dump $dump into $dump_dir"
+  cd "$dump_dir"
+  zcat "$dump" | pv -f -s $dump_length | tar -xf -
+
+}
+
+load "$@"

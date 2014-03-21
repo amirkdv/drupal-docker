@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# recursive goes through a given directory (positional argument $1), and
+# marks all files as executable and creates absolute path symlinks to each in a
+# second directory (positional argument $2). Typically, the destination
+# directory is a directory in path, e.g. /usr/local/bin/
+
+src_dir="$1"
+dst_dir="$2"
+
+set -o errexit
+set -o nounset
+
+for script in $( find $src_dir -type f );
+  do scr="$( readlink -f $script)"
+  chmod +x "$script"
+  ln -sf "$script" "$dst_dir/$( basename $script )"
+done

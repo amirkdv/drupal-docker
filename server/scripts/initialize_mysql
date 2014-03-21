@@ -1,0 +1,16 @@
+#!/bin/bash
+source /usr/local/bin/supervisor_drupal_helpers.sh
+
+supervisor_service_up mysql
+
+log "initializing MySQL accounts..."
+
+mysqladmin -u root password "${_conf_db_root}"
+mysql -u root -p"${_conf_db_root}" <<EOF
+  DROP DATABASE IF EXISTS ${_conf_db_name};
+  CREATE DATABASE ${_conf_db_name};
+  GRANT ALL ON ${_conf_db_name}.* TO '${_conf_db_user}'@'${_conf_db_host}' IDENTIFIED BY '${_conf_db_pass}';
+  FLUSH PRIVILEGES;
+EOF
+
+supervisor_services_done
