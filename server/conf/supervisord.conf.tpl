@@ -1,6 +1,6 @@
 ; supervisor configuration file, if this configuration file is used
 ; supervisord will run in the foreground and will automatically start all
-; programs. Use this configuration file with the -n optoin  in Dockefile CMD:
+; programs. Use this configuration file with the -n option  in Dockefile CMD:
 ; supervisord -c /etc/supervisord.conf -n
 
 [unix_http_server]
@@ -21,9 +21,9 @@ serverurl = unix:///tmp/supervisor.sock
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
 [program:mysql]
-command=/usr/local/bin/pidproxy /var/run/mysqld/mysqld.pid /usr/bin/mysqld_safe --log-error=/var/log/mysql/error.log
-stdout_logfile=/var/log/mysql.log
-stderr_logfile=/var/log/mysql.log
+command=/usr/local/bin/pidproxy /var/run/mysqld/mysqld.pid /usr/bin/mysqld_safe
+        --log-error=/var/log/mysql/error.log
+;       --general_log=1 --general_log_file=/var/log/mysql/access.log ; log all queries
 
 [program:apache]
 environment= APACHE_LOG_DIR="/var/log/apache2",
