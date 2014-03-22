@@ -37,17 +37,17 @@ is probably not a good idea.
 ### Generating configuration files
 All configuration files, typically to be found in `server/conf` have the `.tpl`
 extension and reference a variety of configuration variables.  Dockerfiles use
-`conf_subst` to template these configuration files.  `conf_subst` is a wrapper
+`subst_conf` to template these configuration files.  `subst_conf` is a wrapper
 around `envsubst` allowing for clean batch variable substitutions; see
-[conf_subst Usage](#conf_subst) and [envsubst Usage](#envsubst) for
+[subst_conf Usage](#subst_conf) and [envsubst Usage](#envsubst) for
 the reason this wrapper is needed.  The definitions for variables used in each
 configuration file is passed at execution time (that is in corresponding
-`Dockerfile`s) to `conf_subst`.  However, it is desirable to keep all
+`Dockerfile`s) to `subst_conf`.  However, it is desirable to keep all
 configuration variables in one file, currently `server/conf/build_config.sh`.
 
 Note that although the variable name `$_conf_prj_name` follows the format
-expected by `conf_subst`, it only does so for consistency. For initializing
-`Dockerfile`s, `conf_subst` is not used (since we are dealing with an individual
+expected by `subst_conf`, it only does so for consistency. For initializing
+`Dockerfile`s, `subst_conf` is not used (since we are dealing with an individual
 variable a simple invocation of `envsubst` suffices).
 
 Image Directory Structure
@@ -116,10 +116,10 @@ references that are respected by `envsubst` are `$variable` and `${variable}`
 forms of bash variable expansions, e.g. `${variable:-default}` and the like, are
 not respected by `envsubst`.
 
-### `conf_subst`
-`conf_subst` is a wrapper around `envsubst` that allows batch substitution of
+### `subst_conf`
+`subst_conf` is a wrapper around `envsubst` that allows batch substitution of
 configuration variables in configuration files with variable definitions
-residing in a simple bash script. `conf_subst` expects exactly one positional
+residing in a simple bash script. `subst_conf` expects exactly one positional
 argument, namely the variable definition script, and behaves as follows:
 ```bash
 # build_config.sh
@@ -148,7 +148,7 @@ _conf_solr_home=${_conf_prj_root}/solr
 ```
 
 ```bash
-conf_subst build_config.sh < context.xml.tpl
+subst_conf build_config.sh < context.xml.tpl
 # <Context docBase="/opt/solr/solr_${_conf_solr_version}.war" debug="0" crossContext="true">
 #   <Environment
 #     name="solr/home"
@@ -165,7 +165,7 @@ conf_subst build_config.sh < context.xml.tpl
 # </Context>
 ```
 
-Note that `conf_subst` only respects variables of the form `_conf_*` to avoid
+Note that `subst_conf` only respects variables of the form `_conf_*` to avoid
 unintended substitutions, and leaves undefined variable references intact.
 
 ### `supervisor_drupal_helpers.sh`
