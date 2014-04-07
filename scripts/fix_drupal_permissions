@@ -5,6 +5,7 @@ declare -a writable_dirs=( \
   "${_conf_drupal_root}/sites/default/files" \
   "${_conf_drupal_root}/cache"
 )
+
 log "adjusting permissions on project root directory ${_conf_prj_root}"
 chgrp sudo -R "${_conf_prj_root}"
 chmod -R g=rwx "${_conf_prj_root}"
@@ -24,3 +25,6 @@ for dir in "${writable_dirs[@]}"; do
   fi
   chmod -R u+w "$dir"
 done
+
+chown -R tomcat6:tomcat6 ${_conf_solr_home}
+chmod -R g+s ${_conf_solr_home}
