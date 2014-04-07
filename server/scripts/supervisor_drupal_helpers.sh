@@ -38,7 +38,7 @@ supervisor_service_up(){
 
 supervisor_services_done(){
   log "stopping started programs"
-  for file in $( ls /tmp/supervisor_helpers_started_* ); do
+  for file in $( ls /tmp/supervisor_helpers_started_* 2>/dev/null ); do
     # expectes the files to be of the form supervisor_helpers_started_[program]
     program="$( basename $file | cut -d_ -f4- )"
     $supervisorctl stop "$program" 1>&2
