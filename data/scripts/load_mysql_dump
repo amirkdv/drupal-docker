@@ -11,11 +11,16 @@ load(){
     log "database dump '$db_dump' does not exist"
     exit 1
   fi
-  dump_length="$(zcat -l $db_dump | awk 'NR == 2 {print $2}')"
-  set +x
   log "loading database dump $db_dump into MySQL database $db_name ..."
   mysql -u root -p"${_conf_db_root}" -e "CREATE DATABASE IF NOT EXISTS $db_name"
-  zcat "$db_dump" | pv -f -s $dump_length | mysql -u root -p"${_conf_db_root}" -D $db_name
+  if gunzip -t "$db_dump" 2>/dev/null; then
+    dump_length="$(zcat -l $db_dump | awk 'NR == 2 {print $2}')"
+    cat='zcat'
+  else
+    dump_length="$( du -sh $db_dump  | cut -f1 )"
+    cat='cat'
+  fi
+  $cat "$db_dump" | pv --force --size $dump_length | mysql -u root -p"${_conf_db_root}" -D $db_name
 }
 
 supervisor_service_up mysql
