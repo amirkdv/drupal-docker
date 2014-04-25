@@ -20,6 +20,7 @@ load(){
     dump_length="$( du -sh $db_dump  | cut -f1 )"
     cat='cat'
   fi
+  mysql -u root -p"${_conf_db_root}" -e "DROP DATABASE IF EXISTS $db_name ; CREATE DATABASE IF NOT EXISTS $db_name";
   $cat "$db_dump" | pv --force --size $dump_length | mysql -u root -p"${_conf_db_root}" -D $db_name
 }
 
