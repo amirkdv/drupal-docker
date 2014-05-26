@@ -3,8 +3,8 @@ FROM  ubuntu:12.04
 ADD ./scripts/symlink_all_scripts /usr/local/bin/symlink_all_scripts
 ADD ./scripts /var/deploy/scripts/base/
 
-RUN chmod +x /usr/local/bin/symlink_all_scripts && \
-    symlink_all_scripts /var/deploy/scripts/base/ /usr/local/bin/
+RUN chmod +x /usr/local/bin/symlink_all_scripts
+RUN symlink_all_scripts /var/deploy/scripts/base/ /usr/local/bin/
 
 RUN apt-get update
 
