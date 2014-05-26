@@ -93,25 +93,10 @@ git_repo(){
 main(){
   set -e
   case "$1" in
-    dockerfile)
+    dockerfile|ensure_pubkey_exists|introduce_hosts|dl|git_repo)
+      callback=$1
       shift
-      dockerfile "$@"
-      ;;
-    ensure_pubkey_exists)
-      shift
-      ensure_pubkey_exists "$@"
-      ;;
-    introduce_hosts)
-      shift
-      introduce_hosts "$@"
-      ;;
-    dl)
-      shift
-      dl "$@"
-      ;;
-    git_repo)
-      shift
-      git_repo "$@"
+      $callback "$@"
       ;;
     *)
       log "provided argument list won't do!"
