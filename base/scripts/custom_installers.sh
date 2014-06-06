@@ -12,7 +12,7 @@ custom_install(){
         ;;
       postfix)
         log "installing postfix ..."
-        echo "postfix postfix/mailname string coursecal-dev.tree.ewdev.ca" | debconf-set-selections
+        echo "postfix postfix/mailname string example.com" | debconf-set-selections
         echo "postfix postfix/main_mailer_type string 'Internet Site'" | debconf-set-selections
         apt-get install -y postfix
         apt-get clean
